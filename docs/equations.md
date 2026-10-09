@@ -14,18 +14,18 @@ Entraînement : pour chaque équation ci-dessous, cache la colonne « Lecture »
 
 | # | Équation | Lecture |
 |---|---|---|
-| E1 | σ = N_b c / (πR) | Solidité : fraction du disque occupée par les pales. |
-| E2 | μ = V cos α / (ΩR) | Vitesse d'avance : vent dans le plan du disque, rapporté à la vitesse en bout de pale. |
-| E3 | λ_c = V sin α / (ΩR) | Part du vent qui traverse le disque (montée ou descente). |
-| E4 | C_T = (σa/2)[θ₀.₇₅/3·(1 + 3/2 μ²) − λ/2] | Élément de pale : la portance croît avec le pas et l'avance, et décroît avec l'inflow (l'inflow réduit l'incidence). |
-| E5 | λ = λ_c + C_T / (2√(μ² + λ²)) | Glauert : la vitesse induite est d'autant plus faible que le débit d'air à travers le disque est grand. C'est l'origine de la *portance de translation*. |
-| E6 | C_H = (σμ/4)(c_d0 + a θ λ) | Force H dans le plan : traînée de profil + portance inclinée par l'inflow, asymétrisée par l'avance. |
-| E7 | C_Q = κλ_i C_T + λ_c C_T + (σc_d0/8)(1 + 4.65μ²) | Couple = puissance induite + puissance de montée + puissance de profil. |
-| E8 | T = C_T ρA(ΩR)², H = C_H ρA(ΩR)², Q = C_Q ρA(ΩR)²R | Retour aux grandeurs dimensionnelles. |
-| E9 | D_i = ½ρ\|v_i\| (C_dA)_i v_i | Traînée de la cellule, axe par axe, toujours opposée au mouvement relatif. |
-| E10 | M = Σ r × F | Moment au centre de la cellule. Le bras de levier, c'est la hauteur h. |
+| E1 | $\sigma = \dfrac{N_b\,c}{\pi R}$ | Solidité : fraction du disque occupée par les pales. |
+| E2 | $\mu = \dfrac{V\cos\alpha}{\Omega R}$ | Vitesse d'avance : vent dans le plan du disque, rapporté à la vitesse en bout de pale. |
+| E3 | $\lambda_c = \dfrac{V\sin\alpha}{\Omega R}$ | Part du vent qui traverse le disque (montée ou descente). |
+| E4 | $C_T = \dfrac{\sigma a}{2}\left[\dfrac{\theta_{0.75}}{3}\left(1+\tfrac{3}{2}\mu^2\right)-\dfrac{\lambda}{2}\right]$ | Élément de pale : la portance croît avec le pas et l'avance, et décroît avec l'inflow (l'inflow réduit l'incidence). |
+| E5 | $\lambda = \lambda_c + \dfrac{C_T}{2\sqrt{\mu^2+\lambda^2}}$ | Glauert : la vitesse induite est d'autant plus faible que le débit d'air à travers le disque est grand. C'est l'origine de la *portance de translation*. |
+| E6 | $C_H = \dfrac{\sigma\mu}{4}\left(c_{d0} + a\,\theta\,\lambda\right)$ | Force H dans le plan : traînée de profil + portance inclinée par l'inflow, asymétrisée par l'avance. |
+| E7 | $C_Q = \kappa\lambda_i C_T + \lambda_c C_T + \dfrac{\sigma c_{d0}}{8}\left(1+4.65\mu^2\right)$ | Couple = puissance induite + puissance de montée + puissance de profil. |
+| E8 | $T = C_T\,\rho A(\Omega R)^2,\quad H = C_H\,\rho A(\Omega R)^2,\quad Q = C_Q\,\rho A(\Omega R)^2 R$ | Retour aux grandeurs dimensionnelles. |
+| E9 | $D_i = \tfrac{1}{2}\rho\,\lvert v_i\rvert\,(C_dA)_i\,v_i$ | Traînée de la cellule, axe par axe, toujours opposée au mouvement relatif. |
+| E10 | $\mathbf{M}_O = \sum \mathbf{r}\times\mathbf{F}$ | Moment au centre de la cellule. Le bras de levier, c'est la hauteur h. |
 
-Vérification des limites : avec V = 0, E5 donne λ = √(C_T/2), soit la vitesse induite en vol stationnaire v_h = √(T/2ρA).
+Vérification des limites : avec $V = 0$, E5 donne $\lambda = \sqrt{C_T/2}$, soit la vitesse induite en vol stationnaire $v_h = \sqrt{T/(2\rho A)}$.
 
 Référence : J. G. Leishman, *Principles of Helicopter Aerodynamics*, 2ᵉ éd., CUP 2006, ch. 2–3 et 5.
 
@@ -35,13 +35,13 @@ Référence : J. G. Leishman, *Principles of Helicopter Aerodynamics*, 2ᵉ éd.
 
 | # | Équation | Lecture |
 |---|---|---|
-| E11 | D = q·CdA, avec q = ½ρV² = Δp_Pitot | La traînée est proportionnelle à la pression dynamique. Avec q lu au Pitot, ρ et V n'interviennent plus. |
-| E12 | D = −(F_x cos α + F_z sin α), L = −F_x sin α + F_z cos α | Rotation du repère capteur (lié au drone) vers le repère vent. À α = 0, D = −F_x. |
-| E13 | D_i = CdA·q_i + D₀ (moindres carrés) | La pente donne CdA. L'ordonnée D₀ ≠ 0 révèle une dérive du zéro. |
-| E14 | u(CdA)/CdA = √[(u_F/D)² + (u_q/q)²] | L'incertitude relative explose quand D est petit, d'où l'intérêt des hautes vitesses. |
-| E15 | CdA_c = CdA_u / (1 + ε·CdA_u/C), avec ε ≈ 2.5 | Maskell : en veine fermée, le sillage accélère l'écoulement, donc la traînée mesurée est trop forte. C est la section de la veine. |
-| E16 | h_cp = M_y / F_x | Le capteur donne à la fois la force et le moment, donc la hauteur où s'applique la traînée. |
-| E17 | Re = V·d/ν | Avec un tube de bras d ≈ 20 mm, Re va de 1.3·10³ à 1.7·10⁴. Le régime est sous-critique, donc Cd est à peu près constant : CdA ne doit pas varier avec V. |
+| E11 | $D = q\,C_DA,\quad q = \tfrac{1}{2}\rho V^2 = \Delta p_{\text{Pitot}}$ | La traînée est proportionnelle à la pression dynamique. Avec q lu au Pitot, ρ et V n'interviennent plus. |
+| E12 | $D = -(F_x\cos\alpha + F_z\sin\alpha),\quad L = -F_x\sin\alpha + F_z\cos\alpha$ | Rotation du repère capteur (lié au drone) vers le repère vent. À α = 0, D = −F_x. |
+| E13 | $D_i = C_DA\,q_i + D_0$ (moindres carrés) | La pente donne CdA. L'ordonnée D₀ ≠ 0 révèle une dérive du zéro. |
+| E14 | $\dfrac{u(C_DA)}{C_DA} = \sqrt{\left(\dfrac{u_F}{D}\right)^2 + \left(\dfrac{u_q}{q}\right)^2}$ | L'incertitude relative explose quand D est petit, d'où l'intérêt des hautes vitesses. |
+| E15 | $(C_DA)_c = \dfrac{(C_DA)_u}{1+\varepsilon\,(C_DA)_u/C},\quad \varepsilon \approx 2.5$ | Maskell : en veine fermée, le sillage accélère l'écoulement, donc la traînée mesurée est trop forte. C est la section de la veine. |
+| E16 | $h_{cp} = \dfrac{M_y}{F_x}$ | Le capteur donne à la fois la force et le moment, donc la hauteur où s'applique la traînée. |
+| E17 | $Re = \dfrac{V d}{\nu}$ | Avec un tube de bras d ≈ 20 mm, Re va de 1.3·10³ à 1.7·10⁴. Le régime est sous-critique, donc Cd est à peu près constant : CdA ne doit pas varier avec V. |
 
 **Estimation a priori (CAO).** Surfaces projetées du drone avec l'interface, sans hélices :
 - S_x = 0.034 m² (face au vent) ;
@@ -66,7 +66,7 @@ Note : la mesure couvre le drone et l'interface (tout ce qui est au-dessus de la
 
 | # | Équation | Lecture |
 |---|---|---|
-| E18 | M_r = ⟨Σ dT·r·sinψ⟩ ; analytique : C_Mr = (σaμ/4)(2θ/3 − λ/2) | Roulis de moyeu : la pale avançante voit Ωr + V·sinψ, donc porte plus. Le moment croît linéairement avec μ. |
-| E19 | ΔM_x = −s·M_r, ΔM_y = M_p = ⟨Σ dT·r·cosψ⟩ | Le sens de rotation fixe le côté qui se soulève. M_p = 0 en inflow uniforme, car dT(ψ) ne dépend que de sinψ (symétrie ψ ↔ π−ψ). |
-| E20 | Y = ⟨Σ (dQ/r)·cosψ⟩, F_y = s·Y | Force latérale : traînée des pales projetée sur y. Elle est nulle pour la même raison que M_p ; il faut un battement ou un inflow non uniforme. |
-| E21 | Δv_ar = η(χ, 2d/R)·v_i,av ; ΔM_y ≈ 2d·ΔT_ar, avec ΔT_ar ≈ −(σa/4)ρA(ΩR)·Δv_ar (proposition) | Les rotors arrière baignent dans la déflexion vers le bas due aux rotors avant : ils portent moins, et le drone cabre (M_y < 0). η est l'induction normale hors disque d'un rotor à sillage oblique, à l'angle χ = atan(V/v_i). |
+| E18 | $M_r = \left\langle \sum dT\,r\sin\psi \right\rangle$ ; analytique : $C_{M_r} = \dfrac{\sigma a\mu}{4}\left(\dfrac{2\theta}{3}-\dfrac{\lambda}{2}\right)$ | Roulis de moyeu : la pale avançante voit Ωr + V·sinψ, donc porte plus. Le moment croît linéairement avec μ. |
+| E19 | $\Delta M_x = -s\,M_r,\quad \Delta M_y = M_p = \left\langle \sum dT\,r\cos\psi \right\rangle$ | Le sens de rotation fixe le côté qui se soulève. M_p = 0 en inflow uniforme, car dT(ψ) ne dépend que de sinψ (symétrie ψ ↔ π−ψ). |
+| E20 | $Y = \left\langle \sum \dfrac{dQ}{r}\cos\psi \right\rangle,\quad F_y = s\,Y$ | Force latérale : traînée des pales projetée sur y. Elle est nulle pour la même raison que M_p ; il faut un battement ou un inflow non uniforme. |
+| E21 | $\Delta v_{ar} = \eta\left(\chi, \tfrac{2d}{R}\right) v_{i,av}$ ; $\Delta M_y \approx 2d\,\Delta T_{ar}$, avec $\Delta T_{ar} \approx -\dfrac{\sigma a}{4}\rho A(\Omega R)\,\Delta v_{ar}$ (proposition) | Les rotors arrière baignent dans la déflexion vers le bas due aux rotors avant : ils portent moins, et le drone cabre (M_y < 0). η est l'induction normale hors disque d'un rotor à sillage oblique, à l'angle χ = atan(V/v_i). |

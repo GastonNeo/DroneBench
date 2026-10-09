@@ -18,3 +18,4 @@ Deux cas : sans vent, et en soufflerie de 1 à 13 m/s.
 - Python de niveau ingénieur aéro : SI, commentaires succincts, prints épurés.
 - L'utilisateur s'entraîne à lire les équations : pour toute nouvelle équation, donner une « Lecture » d'une ligne.
 - Hypothèses non confirmées (marquées « À CONFIRMER » dans le code) : masse, hélices, CdA, modèle de capteur.
+- Équations en LaTeX (`$...$`, rendu GitHub) ; dans les tableaux, utiliser `\lvert x\rvert` et non `|x|`.
