@@ -28,3 +28,34 @@ Entraînement : pour chaque équation ci-dessous, cache la colonne « Lecture »
 Vérification des limites : avec V = 0, E5 donne λ = √(C_T/2), soit la vitesse induite en vol stationnaire v_h = √(T/2ρA).
 
 Référence : J. G. Leishman, *Principles of Helicopter Aerodynamics*, 2ᵉ éd., CUP 2006, ch. 2–3 et 5.
+
+## Déterminer CdA (`bench/cda.py`)
+
+**Pourquoi CdA et pas Cd seul ?** Pour un drone, la surface de référence S est arbitraire (frontale ? disque ?). Le produit Cd·S, en m², est la seule grandeur mesurée sans ambiguïté. C'est la « surface équivalente de plaque » qui, multipliée par q, donne la traînée.
+
+| # | Équation | Lecture |
+|---|---|---|
+| E11 | D = q·CdA, avec q = ½ρV² = Δp_Pitot | La traînée est proportionnelle à la pression dynamique. Avec q lu au Pitot, ρ et V n'interviennent plus. |
+| E12 | D = −(F_x cos α + F_z sin α), L = −F_x sin α + F_z cos α | Rotation du repère capteur (lié au drone) vers le repère vent. À α = 0, D = −F_x. |
+| E13 | D_i = CdA·q_i + D₀ (moindres carrés) | La pente donne CdA. L'ordonnée D₀ ≠ 0 révèle une dérive du zéro. |
+| E14 | u(CdA)/CdA = √[(u_F/D)² + (u_q/q)²] | L'incertitude relative explose quand D est petit, d'où l'intérêt des hautes vitesses. |
+| E15 | CdA_c = CdA_u / (1 + ε·CdA_u/C), avec ε ≈ 2.5 | Maskell : en veine fermée, le sillage accélère l'écoulement, donc la traînée mesurée est trop forte. C est la section de la veine. |
+| E16 | h_cp = M_y / F_x | Le capteur donne à la fois la force et le moment, donc la hauteur où s'applique la traînée. |
+| E17 | Re = V·d/ν | Avec un tube de bras d ≈ 20 mm, Re va de 1.3·10³ à 1.7·10⁴. Le régime est sous-critique, donc Cd est à peu près constant : CdA ne doit pas varier avec V. |
+
+**Estimation a priori (CAO).** Surfaces projetées du drone avec l'interface, sans hélices :
+- S_x = 0.034 m² (face au vent) ;
+- S_y = 0.034 m² (de côté) ;
+- S_z = 0.072 m² (vue de dessus).
+
+Avec Cd ≈ 1.1 (assemblage de cylindres et de plaques), on obtient CdA_x ≈ 0.037 m². Le centroïde frontal est à 72 mm au-dessus de la cellule.
+
+**Protocole de mesure, hélices à l'arrêt :**
+1. Faire le zéro du capteur à V = 0, puis vérifier le zéro après chaque balayage (dérive).
+2. Faire des paliers à V = 5, 7, 9, 11 et 13 m/s, chacun d'au moins 30 s, et moyenner. En dessous de 5 m/s, D < 0.6 N : le signal se noie dans la résolution du capteur.
+3. Pour chaque palier, relever q au Pitot, ainsi que F_x, F_z et M_y.
+4. Calculer CdA par la pente (E13), corriger le blocage (E15) et tracer D/q en fonction de V. Si D/q varie, il y a un effet de Reynolds ou une vibration.
+5. Répéter pour α de −15° à +15° avec le bras pour obtenir CdA(α) et L(α).
+6. Hélices en rotation : écrire F_mesuré − F_rotor(modèle) − q·CdA. Ce reste est l'**interaction** rotor/cellule, la grandeur la plus intéressante pour l'étude.
+
+Note : la mesure couvre le drone et l'interface (tout ce qui est au-dessus de la cellule). Le bras et le support ne sont pas mesurés, mais ils perturbent l'écoulement : il faut le noter dans le rapport.

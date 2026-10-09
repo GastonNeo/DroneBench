@@ -3,7 +3,7 @@
 Modèle quasi-statique : BEMT à inflow uniforme (Leishman, 2006, ch. 2-3)
 + traînée de cellule ½ρV²·CdA + poids projeté. Repère capteur = repère drone :
 x avant, y gauche, z haut (axe poussée), origine au centre de la cellule.
-Le vent arrive de l'avant ; alpha > 0 = nez en bas (convention Leishman).
+Vent amont, face au nez (entre bras 1 et 3) ; alpha > 0 = nez en bas (convention Leishman).
 """
 import numpy as np
 from dataclasses import dataclass
@@ -12,20 +12,22 @@ G0, RHO = 9.81, 1.225
 
 @dataclass
 class Bench:
-    # --- Drone (À CONFIRMER : masse pesée, hélices réelles) ---
+    # --- Drone : masse confirmée ; hélices X500 V2 (1045) ---
     m: float = 2.5          # kg, masse au-dessus de la cellule
-    R: float = 0.1905       # m, rayon hélice 15"
-    c: float = 0.022        # m, corde moyenne
+    R: float = 0.127        # m, rayon hélice 10"
+    c: float = 0.018        # m, corde moyenne (À MESURER)
     Nb: int = 2             # pales
-    th75: float = np.radians(8.9)  # pas à 0.75R (pas 5.5" -> atan(p/2πr))
+    th75: float = np.radians(10.8)  # pas 4.5" à 0.75R : atan(p / 2π·0.75R)
     a: float = 5.7          # 1/rad, pente Cl
     cd0: float = 0.015      # traînée profil
     kappa: float = 1.15     # facteur puissance induite
-    CdA: tuple = (0.030, 0.030, 0.060)  # m², traînée cellule (x, y, z)
+    # CdA a priori = Cd·S, S projetée CAO (drone + interface), Cd ≈ 1.1 corps
+    # non profilé, Re ~ 1e3–2e4 ; à remplacer par la mesure (bench/cda.py)
+    CdA: tuple = (0.037, 0.037, 0.079)  # m² (x, y, z) ; S = 0.034, 0.034, 0.072
     # --- Géométrie CAO (mm -> m), réf. centre cellule ---
     d: float = 0.230        # m, bras moteur projeté sur x et y (X, empattement 650)
     h_r: float = 0.194      # m, plan rotor au-dessus de la cellule
-    h_f: float = 0.132      # m, centre de poussée aéro de la cellule (plaques)
+    h_f: float = 0.072      # m, centroïde surface frontale CAO (≈ centre de poussée)
     h_g: float = 0.074      # m, CdG (centroïde CAO, à peser)
 
     @property
