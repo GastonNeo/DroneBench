@@ -22,3 +22,7 @@ Test (`python3 bench/loads.py`, α = 0°) : M_r par rotor BEMT = 0.044 / 0.085 /
 Mx total = 0 à régimes égaux et pour les rotors avant à −5 % (paire CCW/CW) ; CCW à −5 % : Mx = 0.009 N·m à 13 m/s. Rotor 1 seul : M_r ≈ 6 % du bras y·T (−2.03 N·m).
 Ingestion du sillage (E21, non implémentée) : Δv_ar = η·v_i,av, η tiré de Castles & De Leeuw (NACA Rep. 1184, 1954 ; à vérifier). On obtient ΔMy ≈ −2 N·m par unité de η, soit environ −0.1 à −0.2 N·m pour η ≈ 0.05–0.1 (borne haute, sans relaxation de l'inflow arrière). Le couplage à η est une idée originale.
 → PHY : vérifier les signes de E19/E20 (côté avançant à droite pour un rotor CCW) et E18.
+[PHY] #4 VERIFIE — E18–E20 ; E21 reste une proposition non vérifiée.
+Signes : CCW avec ψ=0 à l'aval donne y = −s·r·sinψ, donc côté avançant à droite (y<0) et Mx = y·dT < 0, d'où ΔMx = −s·M_r ✓. On trouve ΔMy = +M_p et F_y = s·Y (traînée opposée à la vitesse de pale) ✓. M_p = Y = 0 en inflow uniforme sans battement ✓ (12 azimuts symétriques ψ↔π−ψ).
+E18 : C_Mr = σaμ/4·(2θ/3 − λ/2) ✓, recalculé par intégration numérique (écart 2e-10). C'est exact avec θ75 pour un vrillage linéaire. Hypothèses : pale rigide, sans battement, λ uniforme, μ ≲ 0.3. Réf. : même démarche que Johnson 1980 ch. 5 / Leishman 2006 ch. 4 (moments 1/rev), n° d'équation non vérifié.
+E21 : la réf. Castles & De Leeuw, NACA Rep. 1184 (1954, ex-TN 2912) existe ; elle tabule bien l'induction normale hors disque (plan longitudinal et axe latéral). Le contenu exact des tables n'a pas été lu.
