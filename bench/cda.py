@@ -34,7 +34,8 @@ def cp_height(Fx, My):
 if __name__ == "__main__":
     # Démonstration sur un essai synthétique (remplacer par les mesures)
     rng = np.random.default_rng(0)
-    CdA_true, h_true, uF, C = 0.037, 0.072, 0.03, 1.0   # m², m, N, m² (veine À CONFIRMER)
+    CdA_true, h_true, uF = 0.037, 0.072, 0.03         # m², m, N
+    C = np.pi * 1.5**2                                  # m², veine Ø3 m
     V = np.array([5, 7, 9, 11, 13.0])
     q = 0.5 * 1.225 * V**2
     Fx = -q * CdA_true * (1 + CdA_true * 2.5 / C) + rng.normal(0, uF, V.size)
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     D, _ = drag_lift(Fx, 0 * Fx, 0.0)
     cda, d0, u = fit_cda(q, D, uF)
     print(f"CdA brut     = {cda:.4f} ± {u:.4f} m²  (D0 = {d0:+.3f} N)")
-    print(f"CdA corrigé  = {maskell(cda, C):.4f} m²  (veine C = {C} m²)")
+    print(f"CdA corrigé  = {maskell(cda, C):.4f} m²  (veine C = {C:.2f} m²)")
     print(f"h_cp         = {np.mean(cp_height(Fx, My))*1e3:.0f} mm")
     print("\n V    q[Pa]  D[N]  u(D)/D")
     for v, qi, di in zip(V, q, D):

@@ -15,7 +15,7 @@ class Bench:
     # --- Drone : masse confirmée ; hélices X500 V2 (1045) ---
     m: float = 2.5          # kg, masse au-dessus de la cellule
     R: float = 0.127        # m, rayon hélice 10"
-    c: float = 0.018        # m, corde moyenne (À MESURER)
+    c: float = 0.018        # m, corde moyenne (mesurée)
     Nb: int = 2             # pales
     th75: float = np.radians(10.8)  # pas 4.5" à 0.75R : atan(p / 2π·0.75R)
     a: float = 5.7          # 1/rad, pente Cl
