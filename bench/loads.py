@@ -40,7 +40,7 @@ class Bench:
 
 
 def rotor(b, Om, V, alpha):
-    """T, H, Q d'un rotor (N, N, N·m). Inflow uniforme, pas de battement."""
+    """T, H, Q, (M_r, M_p, Y) d'un rotor CCW. Inflow uniforme, pas de battement."""
     VR = Om * b.R
     mu, lc = V * np.cos(alpha) / VR, V * np.sin(alpha) / VR
     s, lam = b.sigma, 0.05
@@ -53,8 +53,9 @@ def rotor(b, Om, V, alpha):
     li = lam - lc
     CH = s * mu / 4 * (b.cd0 + b.a * b.th75 * lam)        # profil + portance inclinée
     CQ = b.kappa * li * CT + lc * CT + s * b.cd0 / 8 * (1 + 4.65 * mu**2)
+    CMr = s * b.a * mu / 4 * (2 * b.th75 / 3 - lam / 2)  # E18 : roulis de moyeu
     q = RHO * b.A * VR**2
-    return CT * q, CH * q, CQ * q * b.R
+    return CT * q, CH * q, CQ * q * b.R, (CMr * q * b.R, 0.0, 0.0)
 
 
 def omega_hover(b, rot=rotor):
@@ -67,17 +68,21 @@ def omega_hover(b, rot=rotor):
 
 
 def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor):
-    """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule."""
-    T, H, Q = rot(b, Om, V, alpha)
-    ex = np.array([1.0, 0, 0])
+    """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule. Om : scalaire ou 4 valeurs."""
+    cache = {}                                              # un appel rotor par régime distinct
     hubs = b.d * np.array([[1, -1], [-1, 1], [1, 1], [-1, -1]])  # PX4 quad-X : 1 AvD, 2 ArG, 3 AvG, 4 ArD
     spin = [1, 1, -1, -1]                                   # +1 = CCW vu de dessus
     F, M = np.zeros(3), np.zeros(3)
-    for (x, y), s in zip(hubs, spin):
-        f = np.array([-H, 0, T])                            # H opposé à l'avance
+    for (x, y), s, om in zip(hubs, spin, np.broadcast_to(Om, 4)):
+        if om <= 0:                                         # rotor arrêté : ignoré
+            continue
+        if om not in cache:
+            cache[om] = rot(b, om, V, alpha)
+        T, H, Q, (Mr, Mp, Y) = (*cache[om], (0, 0, 0))[:4]  # 3 retours tolérés
+        f = np.array([-H, s * Y, T])                        # H opposé à l'avance ; Y : E20
         r = np.array([x, y, b.h_r])
         F += f
-        M += np.cross(r, f) + np.array([0, 0, -s * Q])      # réaction couple
+        M += np.cross(r, f) + np.array([-s * Mr, Mp, -s * Q])  # E19 moyeu ; réaction couple
     va = -V * np.array([np.cos(alpha), 0, np.sin(alpha)])   # air relatif (repère drone)
     D = 0.5 * RHO * np.abs(va) * np.array(b.CdA) * va       # traînée cellule
     W = b.m * G0 * np.array([np.sin(alpha), 0, -np.cos(alpha)])
@@ -107,3 +112,17 @@ if __name__ == "__main__":
             u = 100 * np.max(np.abs(wb) / LIMITS)
             print(f"{V:4.0f} {wa[0]:6.2f} {wa[2]:6.2f} {wa[4]:6.2f} | {wb[0]:6.2f} {wb[2]:6.2f} {wb[4]:6.2f}  {u:4.0f}")
     print("\nFy = Mx = Mz = 0 par symétrie. max% : Gamma SI-130-10 (capteur À CONFIRMER)")
+
+    # Moments de moyeu (E18–E19), α = 0, BEMT. Cas : avant −5 % (rotors 1,3), CCW −5 % (1,2)
+    cases = {"égal": [1, 1, 1, 1], "av−5%": [.95, 1, .95, 1], "CCW−5%": [.95, .95, 1, 1]}
+    print(f"\nMoments de moyeu, α = 0°, BEMT   [N·m]\n{'V':>4} {'M_r(an)':>8} {'M_r':>7} {'Mx_1':>7}"
+          + "".join(f" {'Mx '+k:>10} {'My '+k:>10}" for k in cases))
+    for V in [0, 1, 3, 5, 7, 9, 11, 13]:
+        Ob = Om["BEMT"]
+        Mr = rotor_bemt(b, Ob, V, 0)[3][0]
+        Mr_an = rotor(b, Om["analytique"], V, 0)[3][0]
+        w = {k: wrench(b, Ob * np.array(c), V, rot=rotor_bemt) for k, c in cases.items()}
+        w1 = wrench(b, Ob * np.array([1, 0, 0, 0]), V, rot=rotor_bemt, tare=False)  # rotor 1 seul
+        print(f"{V:4.0f} {Mr_an:8.4f} {Mr:7.4f} {w1[3]:7.3f}"
+              + "".join(f" {w[k][3]:10.4f} {w[k][4]:10.3f}" for k in cases))
+    print("M_r : par rotor ; Mx_1 : rotor 1 seul (bras y·T inclus) ; M_p = Y = 0 (symétrie ψ ↔ π−ψ)")

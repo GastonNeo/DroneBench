@@ -59,3 +59,14 @@ Avec Cd ≈ 1.1 (assemblage de cylindres et de plaques), on obtient CdA_x ≈ 0.
 6. Hélices en rotation : écrire F_mesuré − F_rotor(modèle) − q·CdA. Ce reste est l'**interaction** rotor/cellule, la grandeur la plus intéressante pour l'étude.
 
 Note : la mesure couvre le drone et l'interface (tout ce qui est au-dessus de la cellule). Le bras et le support ne sont pas mesurés, mais ils perturbent l'écoulement : il faut le noter dans le rapport.
+
+## Moments de moyeu (`bench/rotor_bemt.py`, `bench/loads.py`)
+
+ψ = 0 côté aval, pale avançante à ψ = 90°, s = +1 pour CCW et −1 pour CW (vu de dessus). Le côté avançant est à droite pour un rotor CCW et à gauche pour un rotor CW.
+
+| # | Équation | Lecture |
+|---|---|---|
+| E18 | M_r = ⟨Σ dT·r·sinψ⟩ ; analytique : C_Mr = (σaμ/4)(2θ/3 − λ/2) | Roulis de moyeu : la pale avançante voit Ωr + V·sinψ, donc porte plus. Le moment croît linéairement avec μ. |
+| E19 | ΔM_x = −s·M_r, ΔM_y = M_p = ⟨Σ dT·r·cosψ⟩ | Le sens de rotation fixe le côté qui se soulève. M_p = 0 en inflow uniforme, car dT(ψ) ne dépend que de sinψ (symétrie ψ ↔ π−ψ). |
+| E20 | Y = ⟨Σ (dQ/r)·cosψ⟩, F_y = s·Y | Force latérale : traînée des pales projetée sur y. Elle est nulle pour la même raison que M_p ; il faut un battement ou un inflow non uniforme. |
+| E21 | Δv_ar = η(χ, 2d/R)·v_i,av ; ΔM_y ≈ 2d·ΔT_ar, avec ΔT_ar ≈ −(σa/4)ρA(ΩR)·Δv_ar (proposition) | Les rotors arrière baignent dans la déflexion vers le bas due aux rotors avant : ils portent moins, et le drone cabre (M_y < 0). η est l'induction normale hors disque d'un rotor à sillage oblique, à l'angle χ = atan(V/v_i). |
