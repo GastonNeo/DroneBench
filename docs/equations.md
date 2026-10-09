@@ -69,4 +69,18 @@ Note : la mesure couvre le drone et l'interface (tout ce qui est au-dessus de la
 | E18 | $M_r = \left\langle \sum dT\,r\sin\psi \right\rangle$ ; analytique : $C_{M_r} = \dfrac{\sigma a\mu}{4}\left(\dfrac{2\theta}{3}-\dfrac{\lambda}{2}\right)$ | Roulis de moyeu : la pale avançante voit Ωr + V·sinψ, donc porte plus. Le moment croît linéairement avec μ. |
 | E19 | $\Delta M_x = -s\,M_r,\quad \Delta M_y = M_p = \left\langle \sum dT\,r\cos\psi \right\rangle$ | Le sens de rotation fixe le côté qui se soulève. M_p = 0 en inflow uniforme, car dT(ψ) ne dépend que de sinψ (symétrie ψ ↔ π−ψ). |
 | E20 | $Y = \left\langle \sum \dfrac{dQ}{r}\cos\psi \right\rangle,\quad F_y = s\,Y$ | Force latérale : traînée des pales projetée sur y. Elle est nulle pour la même raison que M_p ; il faut un battement ou un inflow non uniforme. |
-| E21 | $\Delta v_{ar} = \eta\left(\chi, \tfrac{2d}{R}\right) v_{i,av}$ ; $\Delta M_y \approx 2d\,\Delta T_{ar}$, avec $\Delta T_{ar} \approx -\dfrac{\sigma a}{4}\rho A(\Omega R)\,\Delta v_{ar}$ (proposition) | Les rotors arrière baignent dans la déflexion vers le bas due aux rotors avant : ils portent moins, et le drone cabre (M_y < 0). η est l'induction normale hors disque d'un rotor à sillage oblique, à l'angle χ = atan(V/v_i). |
+| E21 | $\Delta v_{ar} = \eta\left(\chi, \tfrac{2d}{R}\right) v_0$ ; $\Delta M_y \approx 2d\,\Delta T_{ar}$, avec $\Delta T_{ar}$ calculé par la BEMT (E26) (révisée) | Les rotors arrière baignent dans la déflexion vers le bas due aux rotors avant : ils portent moins, et le drone cabre ($M_y < 0$). |
+
+## Sillage oblique et ingestion arrière (`bench/wake.py`)
+
+Castles & De Leeuw (NACA Rep. 1184, 1954) : disque à charge uniforme, sillage cylindrique oblique rigide. Repère du disque en unités R : X > 0 aval, Z haut ; v > 0 vers le bas. Validation : Jewel & Heyson (NASA Memo 4-15-59L), fig. 19(a).
+
+| # | Équation | Lecture |
+|---|---|---|
+| E22 | $\mathbf{v} = \dfrac{\Gamma}{4\pi}\,\dfrac{\mathbf{r}_1\times\mathbf{r}_2}{\lvert\mathbf{r}_1\times\mathbf{r}_2\rvert^2}\;(\mathbf{r}_2-\mathbf{r}_1)\cdot\left(\dfrac{\mathbf{r}_1}{r_1}-\dfrac{\mathbf{r}_2}{r_2}\right)$ | Biot-Savart pour un segment tourbillon droit : la vitesse tourne autour du segment et décroît comme 1/distance. |
+| E23 | Anneaux de rayon R parallèles au disque, centrés en $(s\sin\chi,\ 0,\ -s\cos\chi)$, $d\Gamma = \gamma\,ds$ ; $\dfrac{v}{v_0} = \dfrac{v(X,Y)}{v(0,0)}$ | Le sillage est un tube de tourbillons couché vers l'aval d'un angle χ. On normalise par la vitesse au centre, qui vaut $\gamma/2$ quel que soit χ. |
+| E24 | $\eta = \dfrac{1}{\pi R^2}\displaystyle\iint_{A_{ar}} \dfrac{v}{v_0}\,dA$ | Fraction de la vitesse induite du rotor avant que le rotor arrière reçoit en moyenne sur son disque. |
+| E25 | $v_0 = \dfrac{T_{av}}{2\rho A\sqrt{(V\cos\alpha)^2 + (V\sin\alpha + v_0)^2}}$ ; $\chi = \arctan\dfrac{V\cos\alpha}{V\sin\alpha + v_0}$ | Glauert donne v₀ ; χ est l'angle dont le vent couche le sillage. χ → 90° quand V ≫ v₀, et le sillage passe alors au ras du rotor arrière. |
+| E26 | $V_{a0} = V\sin\alpha + \Delta v_{ar}$ (attribut `w_upwash` de la BEMT) | Le rotor arrière voit le sillage avant comme une montée : son incidence baisse, donc sa poussée aussi. |
+
+Domaine : le sillage n'est rigide que si $V \gtrsim v_h$ (≈ 6.9 m/s ici, χ ≳ 50°). En dessous, η < 0.1 et l'effet est quasi nul. Le modèle néglige l'enroulement en deux tourbillons marginaux (χ > 70°) et l'effet croisé du rotor avant opposé (η ≈ −0.05 à χ = 75°).

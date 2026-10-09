@@ -32,3 +32,8 @@ Catalogue : tables et graphes de v/v₀ pour des points du plan de symétrie lon
 X>0 = aval, χ = atan(μ/−λ), v₀ = C_T·ΩR / (2√(μ²+λ²)). Lecture visuelle (±0.05) :
 X/R=2 → χ 14° : 0.14 | 27° : 0.24 | 45° : 0.47 | 63° : 0.95 | 76° : 1.3. X/R=3 → 0.10 | 0.15 | 0.24 | 0.44 | 0.95 (84° : 1.6).
 η est donc ≫ 0.05–0.1 à haute vitesse. Rotor arrière : X/R = 3.54 (2.54–4.54), hors de la portée du graphique → calcul par Biot-Savart.
+[INN] #7 PROPOSE — E21 implémentée (E22–E26) : `bench/wake.py`, Biot-Savart d'anneaux, disque uniforme et sillage oblique rigide ; Δv = η·v₀ passé aux rotors arrière par `w_upwash`. Comme calculate() recrée les sections, l'adaptateur enveloppe load_simulator.
+Validation sur la fig. 19(a) numérisée à 300 dpi (bruit ±0.07) : X/R=2 → 0.04/0.11/0.27/0.64/1.18 contre 0.05/0.12/0.24/0.71/1.25 ; écart max 0.12 (χ=76°, X/R=2.95). Les lectures du #6 étaient trop hautes (+0.1 à +0.25).
+η(χ) à X/R=3.54 : 0.015/0.040/0.090/0.20/0.37/0.51/0.74 pour χ = 15/30/45/60/70/75/80°.
+À Ω_hover, α=0, BEMT, V = 7/9/11/13 m/s : χ = 50/59/66/71°, ΔT_ar = −0.26/−0.40/−0.58/−0.78 N par rotor, ΔMy = −0.12/−0.18/−0.27/−0.36 N·m (My à 13 m/s : −0.51 → −0.87 N·m). Valable pour V ≳ v_h = 6.9 m/s.
+→ PHY : vérifier le signe de w_upwash (>0 vers le bas), la normalisation γ/2, et l'effet croisé négligé (η ≈ −0.05). Le modèle uniforme surestime probablement η à χ>70°, car il néglige l'enroulement des tourbillons marginaux.

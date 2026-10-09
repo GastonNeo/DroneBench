@@ -39,10 +39,10 @@ class Bench:
         return np.pi * self.R**2
 
 
-def rotor(b, Om, V, alpha):
-    """T, H, Q, (M_r, M_p, Y) d'un rotor CCW. Inflow uniforme, pas de battement."""
+def rotor(b, Om, V, alpha, dv=0.0):
+    """T, H, Q, (M_r, M_p, Y) d'un rotor CCW. Inflow uniforme, pas de battement. dv : sillage amont (E26)."""
     VR = Om * b.R
-    mu, lc = V * np.cos(alpha) / VR, V * np.sin(alpha) / VR
+    mu, lc = V * np.cos(alpha) / VR, (V * np.sin(alpha) + dv) / VR
     s, lam = b.sigma, 0.05
     for _ in range(200):                                  # point fixe sur λ
         CT = s * b.a / 2 * (b.th75 / 3 * (1 + 1.5 * mu**2) - lam / 2)
@@ -67,8 +67,9 @@ def omega_hover(b, rot=rotor):
     return 0.5 * (lo + hi)
 
 
-def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor):
-    """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule. Om : scalaire ou 4 valeurs."""
+def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor, dv=0.0):
+    """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule. Om : scalaire ou 4 valeurs.
+    dv : Δv vers le bas sur les rotors arrière (sillage avant, E26)."""
     cache = {}                                              # un appel rotor par régime distinct
     hubs = b.d * np.array([[1, -1], [-1, 1], [1, 1], [-1, -1]])  # PX4 quad-X : 1 AvD, 2 ArG, 3 AvG, 4 ArD
     spin = [1, 1, -1, -1]                                   # +1 = CCW vu de dessus
@@ -76,9 +77,10 @@ def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor):
     for (x, y), s, om in zip(hubs, spin, np.broadcast_to(Om, 4)):
         if om <= 0:                                         # rotor arrêté : ignoré
             continue
-        if om not in cache:
-            cache[om] = rot(b, om, V, alpha)
-        T, H, Q, (Mr, Mp, Y) = (*cache[om], (0, 0, 0))[:4]  # 3 retours tolérés
+        k = (om, dv if x < 0 else 0.0)
+        if k not in cache:
+            cache[k] = rot(b, om, V, alpha, dv=k[1]) if k[1] else rot(b, om, V, alpha)
+        T, H, Q, (Mr, Mp, Y) = (*cache[k], (0, 0, 0))[:4]   # 3 retours tolérés
         f = np.array([-H, s * Y, T])                        # H opposé à l'avance ; Y : E20
         r = np.array([x, y, b.h_r])
         F += f
@@ -126,3 +128,17 @@ if __name__ == "__main__":
         print(f"{V:4.0f} {Mr_an:8.4f} {Mr:7.4f} {w1[3]:7.3f}"
               + "".join(f" {w[k][3]:10.4f} {w[k][4]:10.3f}" for k in cases))
     print("M_r : par rotor ; Mx_1 : rotor 1 seul (bras y·T inclus) ; M_p = Y = 0 (symétrie ψ ↔ π−ψ)")
+
+    # Ingestion du sillage avant par les rotors arrière (E22–E26), α = 0, BEMT, Ω = Ω_hover
+    from wake import dv_rear
+    Ob = Om["BEMT"]
+    vh = np.sqrt(rotor_bemt(b, Ob, 0, 0)[0] / (2 * RHO * b.A))
+    print(f"\nSillage avant -> rotors arrière, α = 0°, BEMT, v_h = {vh:.1f} m/s   [m/s, N, N·m]")
+    print(f"{'V':>4} {'χ°':>5} {'v0':>5} {'η':>6} {'Δv':>5} {'ΔT_ar':>6} {'My':>6} {'My_s':>6} {'ΔMy':>6}")
+    for V in [1, 3, 5, 7, 9, 11, 13]:
+        dv, chi, v0 = dv_rear(b, rotor_bemt(b, Ob, V, 0)[0], V)
+        dT = rotor_bemt(b, Ob, V, 0, dv=dv)[0] - rotor_bemt(b, Ob, V, 0)[0]
+        w0, w1 = wrench(b, Ob, V, rot=rotor_bemt), wrench(b, Ob, V, rot=rotor_bemt, dv=dv)
+        print(f"{V:4.0f} {np.degrees(chi):5.1f} {v0:5.2f} {dv/v0:6.3f} {dv:5.2f} {dT:6.3f} "
+              f"{w0[4]:6.3f} {w1[4]:6.3f} {w1[4]-w0[4]:6.3f}")
+    print("ΔT_ar par rotor ; My_s : avec sillage. Sillage rigide valable pour V ≳ v_h (en dessous, effet ≈ 0)")

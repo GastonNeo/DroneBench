@@ -6,6 +6,7 @@ H est obtenu en projetant la force tangentielle de chaque section sur l'axe vent
 puis en moyennant sur l'azimut (la BEMT ne fournit que T et Q).
 """
 import sys
+import logging
 from pathlib import Path
 import numpy as np
 
@@ -16,13 +17,15 @@ from core.SimulationParameters import SimulationParameters   # noqa: E402
 
 GEOM = _resolve_geometry("X500_classic", "x500_strips.json", "m", None)[0]
 D, NB = 0.26, 2   # m, pales (X500 V2)
+logging.getLogger().setLevel(logging.ERROR)                  # avertissement « unlinear » répété
 
 
-def rotor_bemt(b, Om, V, alpha, n_az=12):
+def rotor_bemt(b, Om, V, alpha, n_az=12, dv=0.0):
     """T, H, Q [N, N, N·m], (M_r, M_p, Y) [N·m, N·m, N] pour un rotor CCW (E18–E20).
 
     alpha > 0 nez en bas ; a_disk = angle axe rotor / vent. ψ = 0 aval, avançante à 90°.
     M_p et Y ≈ 0 : en inflow uniforme dT(ψ), dQ(ψ) ne dépendent que de sinψ (symétrie ψ ↔ π−ψ).
+    dv [m/s] : vitesse axiale externe vers le bas (sillage amont, E26), ajoutée à V_a0 via w_upwash.
     """
     p = SimulationParameters(v_inf=V, rpm=Om * 30 / np.pi, blade_count=NB,
                              rotor_diameter=D, a_disk=np.pi / 2 - alpha)
@@ -32,6 +35,13 @@ def rotor_bemt(b, Om, V, alpha, n_az=12):
         T, Q, _ = rot.calculate()
         return T, 0.0, Q, (0.0, 0.0, 0.0)
     rot.unlinear = True
+    if dv:                                   # calculate() recrée les sections : w_upwash posé après chaque load
+        load = rot.load_simulator
+        def load_dv():
+            load()
+            for s in rot.propeller.sections:
+                s.w_upwash = dv
+        rot.load_simulator = load_dv
     T = H = Q = Mr = Mp = Y = 0.0
     for psi in np.linspace(0, 2 * np.pi, n_az, endpoint=False):
         rot.azimuth = psi
