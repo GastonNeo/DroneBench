@@ -14,7 +14,7 @@ G0, RHO = 9.81, 1.225
 class Bench:
     # --- Drone : masse confirmée ; hélices X500 V2 (1045) ---
     m: float = 2.5          # kg, masse au-dessus de la cellule
-    R: float = 0.127        # m, rayon hélice 10"
+    R: float = 0.130        # m, rayon (D = 0.26 m, cf. BEMT/X500.py)
     c: float = 0.018        # m, corde moyenne (mesurée)
     Nb: int = 2             # pales
     th75: float = np.radians(10.8)  # pas 4.5" à 0.75R : atan(p / 2π·0.75R)
@@ -57,18 +57,18 @@ def rotor(b, Om, V, alpha):
     return CT * q, CH * q, CQ * q * b.R
 
 
-def omega_hover(b):
+def omega_hover(b, rot=rotor):
     """Ω tel que 4T = mg à V = 0 (dichotomie)."""
     lo, hi = 50.0, 3000.0
-    for _ in range(60):
+    for _ in range(30):
         mid = 0.5 * (lo + hi)
-        lo, hi = (mid, hi) if 4 * rotor(b, mid, 0, 0)[0] < b.m * G0 else (lo, mid)
+        lo, hi = (mid, hi) if 4 * rot(b, mid, 0, 0)[0] < b.m * G0 else (lo, mid)
     return 0.5 * (lo + hi)
 
 
-def wrench(b, Om, V, alpha=0.0, tare=True):
+def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor):
     """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule."""
-    T, H, Q = rotor(b, Om, V, alpha)
+    T, H, Q = rot(b, Om, V, alpha)
     ex = np.array([1.0, 0, 0])
     hubs = b.d * np.array([[1, -1], [-1, 1], [1, 1], [-1, -1]])  # PX4 quad-X : 1 AvD, 2 ArG, 3 AvG, 4 ArD
     spin = [1, 1, -1, -1]                                   # +1 = CCW vu de dessus
@@ -92,14 +92,18 @@ def wrench(b, Om, V, alpha=0.0, tare=True):
 LIMITS = np.array([130, 130, 400, 10, 10, 10])
 
 if __name__ == "__main__":
+    from rotor_bemt import rotor_bemt
     b = Bench()
-    Om = omega_hover(b)
-    print(f"Ω_hover = {Om:.0f} rad/s ({Om*30/np.pi:.0f} tr/min)  σ = {b.sigma:.3f}  μ_max = {13/(Om*b.R):.3f}")
+    models = {"analytique": rotor, "BEMT": rotor_bemt}
+    Om = {k: omega_hover(b, r) for k, r in models.items()}
+    for k in models:
+        print(f"Ω_hover {k:10s} = {Om[k]*30/np.pi:5.0f} tr/min")
     for alpha in (0.0, np.radians(10)):
-        print(f"\nα = {np.degrees(alpha):.0f}°  (Ω fixe, poids taré à α = 0)")
-        print(f"{'V':>4} {'Fx':>7} {'Fy':>6} {'Fz':>7} {'Mx':>6} {'My':>6} {'Mz':>7} {'max%':>5}")
+        print(f"\nα = {np.degrees(alpha):.0f}°  Ω fixe = Ω_hover, poids taré à α = 0   [N, N·m]")
+        print(f"{'':4} {'analytique':^20} | {'BEMT':^20}")
+        print(f"{'V':>4} {'Fx':>6} {'Fz':>6} {'My':>6} | {'Fx':>6} {'Fz':>6} {'My':>6}  max%")
         for V in [0, 1, 3, 5, 7, 9, 11, 13]:
-            w = wrench(b, Om, V, alpha)
-            u = 100 * np.max(np.abs(w) / LIMITS)
-            print(f"{V:4.0f} {w[0]:7.2f} {w[1]:6.2f} {w[2]:7.2f} {w[3]:6.2f} {w[4]:6.2f} {w[5]:7.3f} {u:5.0f}")
-    print("\n[N, N·m]  max% = taux d'utilisation pleine échelle")
+            wa, wb = (wrench(b, Om[k], V, alpha, rot=r) for k, r in models.items())
+            u = 100 * np.max(np.abs(wb) / LIMITS)
+            print(f"{V:4.0f} {wa[0]:6.2f} {wa[2]:6.2f} {wa[4]:6.2f} | {wb[0]:6.2f} {wb[2]:6.2f} {wb[4]:6.2f}  {u:4.0f}")
+    print("\nFy = Mx = Mz = 0 par symétrie. max% : Gamma SI-130-10 (capteur À CONFIRMER)")
