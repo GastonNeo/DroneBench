@@ -84,3 +84,11 @@ Castles & De Leeuw (NACA Rep. 1184, 1954) : disque à charge uniforme, sillage c
 | E26 | $V_{a0} = V\sin\alpha + \Delta v_{ar}$ (attribut `w_upwash` de la BEMT) | Le rotor arrière voit le sillage avant comme une montée : son incidence baisse, donc sa poussée aussi. |
 
 Domaine : le sillage n'est rigide que si $V \gtrsim v_h$ (≈ 6.9 m/s ici, χ ≳ 50°). En dessous, η < 0.1 et l'effet est quasi nul. Le modèle néglige l'enroulement en deux tourbillons marginaux (χ > 70°) et l'effet croisé du rotor avant opposé (η ≈ −0.05 à χ = 75°).
+
+## Couples aux moteurs du banc (`bench/results.py`)
+
+| # | Équation | Lecture |
+|---|---|---|
+| E27 | $\tau_j = \mathbf{u}_j\cdot\left(\mathbf{M}_O + \mathbf{r}_{P_jO}\times\mathbf{F}\right)$ | Le moteur $j$ ne tient que la composante du moment, transporté sur son axe, le long de cet axe. Le reste passe par les paliers. Le poids du drone est inclus, car il n'y a pas de tare côté moteur. |
+
+Contrôle : à $V = 0$ et au régime de stationnaire (6740 tr/min), $T = mg$, donc $\tau_{pitch} \approx 0$. C'est bien ce que montre la figure 3.

@@ -95,7 +95,7 @@ def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor, dv=0.0):
     return np.concatenate([F, M])
 
 
-# Gamma SI-130-10 supposé (À CONFIRMER) : Fxy, Fz, Mxy, Mz
+# ATI Gamma confirmé ; calibration SI-130-10 supposée (À CONFIRMER) : Fxy, Fz, Mxy, Mz
 LIMITS = np.array([130, 130, 400, 10, 10, 10])
 
 if __name__ == "__main__":

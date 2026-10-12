@@ -41,3 +41,6 @@ Validation sur la fig. 19(a) numérisée à 300 dpi (bruit ±0.07) : X/R=2 → 0
 Fig. 19(a), relevé pixel avec grille locale (la page est inclinée d'environ 9 px) : χ = 45° à X/R = 1.76/2.26/2.97 → 0.35/0.23/0.12 contre 0.34/0.22/0.13 pour le modèle ; χ = 76° → 1.30/1.10/0.88 contre 1.29/1.07/0.84 ; χ = 63° à X/R = 1.76/2.97 → 0.80/0.33 contre 0.77/0.37. Écart ≤ 0.04.
 Signes : V_a0 = V cos(a_disk) + w_upwash = V sinα + Δv (Section.py l. 240), donc Δv > 0 fait baisser T ; rotors arrière en x = −d : ΔM_y = −x ΔT = 2d ΔT_ar < 0, le drone cabre ; −0.78 × 0.46 = −0.36 N·m.
 Limites : X/R = 3.54 est hors de la fig. (extrapolation) ; sillage rigide sans contraction ni enroulement, donc η est majorant à χ > 70° ; domaine V ≳ v_h raisonnable (en dessous, χ < 45° et η < 0.09).
+[ORCH] #8 — Utilisateur : capteur ATI Gamma confirmé (calibration inconnue). Banc à 3 axes motorisés, axes repris de la CAO : yaw = robolink à la base, roll = arbre Ø20 à h = 605, pitch = arbre Ø20 à h = 864 (X = 130).
+Couples moteurs (E27) dans Results/3. À 9000 tr/min et 13 m/s : τ_pitch ≈ −16, τ_roll ≈ −3.5, τ_yaw ≈ −0.75 N·m. Contrôle : τ_pitch ≈ 0 au stationnaire sans vent.
+Reste à faire : attitude générale (φ, θ, ψ) → dérapage et roulis vus par les rotors et le sillage.

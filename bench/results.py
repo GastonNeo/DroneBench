@@ -1,7 +1,8 @@
 """Balayage en régime : efforts locaux au drone (rotor) et au banc (cellule, base).
 
 Sorties dans Results/ : PNG + CSV. Modèle : BEMT utilisateur + sillage avant (E21–E26).
-α = 0, poids taré. Base = centre de l'articulation robolink (CAO), poids propre du banc exclu.
+α = 0, poids taré. Articulations (CAO) : couple que chaque moteur doit tenir, poids du drone inclus,
+poids propre du banc exclu.
 """
 import sys, warnings
 from pathlib import Path
@@ -20,11 +21,14 @@ OUT = Path(__file__).resolve().parents[1] / "Results"
 RPM = np.arange(3000, 9001, 500)
 VS = [0, 5, 9, 13]                               # m/s
 COL = ["#6da7ec", "#2a78d6", "#1c5cab", "#0d366b"]  # rampe ordinale, validée
-R_BO = np.array([0.337, -0.136, 1.037])          # m, base -> cellule (repère drone, CAO)
+# Axes moteurs (CAO -> repère drone : x = -X, y = -(Z - Z_O), z = hauteur) : r_PO = O - P [m], axe u
+JOINTS = {"yaw":   (np.array([0.337, -0.136, 1.037]), np.array([0, 0, 1.0])),   # robolink, axe vertical
+          "roll":  (np.array([0.402, -0.128, 0.601]), np.array([1.0, 0, 0])),   # arbre Ø20, h = 605 mm
+          "pitch": (np.array([0.467, -0.064, 0.342]), np.array([0, 1.0, 0]))}   # arbre Ø20, h = 864 mm
 
 b = Bench()
 rot = {}                                          # (V, rpm) -> [T, H, Q, Mr, T_ar]
-cell, base = {}, {}
+cell, joint = {}, {}
 for V in VS:
     for n in RPM:
         Om = n * np.pi / 30
@@ -34,7 +38,8 @@ for V in VS:
         w = wrench(b, Om, V, rot=rotor_bemt, dv=dv)
         rot[V, n] = [T, H, Q, Mr, T_ar]
         cell[V, n] = w
-        base[V, n] = np.r_[w[:3], w[3:] + np.cross(R_BO, w[:3])]   # M_B = M_O + r_BO × F
+        wg = wrench(b, Om, V, rot=rotor_bemt, dv=dv, tare=False)      # poids réel aux moteurs
+        joint[V, n] = [u @ (wg[3:] + np.cross(r, wg[:3])) for r, u in JOINTS.values()]  # E27
     print(f"V = {V:2d} m/s  ok")
 
 
@@ -43,7 +48,7 @@ def sweep(data, idx):
 
 
 def grid(panels, data, fname, title, nrow, ncol, lim=None):
-    fig, axs = plt.subplots(nrow, ncol, figsize=(4.2 * ncol, 3.3 * nrow), sharex=True)
+    fig, axs = plt.subplots(nrow, ncol, figsize=(4.2 * ncol, 3.3 * nrow), sharex=True, squeeze=False)
     for ax, (i, lab, unit) in zip(axs.flat, panels):
         for V, c in zip(VS, COL):
             ax.plot(RPM, sweep(data, i)[V], color=c, lw=2, label=f"V = {V} m/s")
@@ -84,9 +89,9 @@ grid([(0, "T rotor avant", "N"), (4, "T rotor arrière (sillage avant)", "N"),
 comp = [("Fx", "N"), ("Fy", "N"), ("Fz", "N"), ("Mx", "N·m"), ("My", "N·m"), ("Mz", "N·m")]
 grid([(i, f"{c} cellule", u) for i, (c, u) in enumerate(comp)], cell,
      "2_cellule_vs_rpm.png", "Banc — torseur au centre de la cellule O (taré)", 2, 3, LIMITS)
-grid([(i, f"{c} base", u) for i, (c, u) in enumerate(comp)], base,
-     "3_base_vs_rpm.png", "Banc — torseur à la base (articulation robolink), poids du banc exclu", 2, 3)
+grid([(i, f"τ {k}", "N·m") for i, k in enumerate(JOINTS)], joint, "3_articulations_vs_rpm.png",
+     "Banc — couple à tenir par moteur (poids drone inclus, poids du banc exclu)", 1, 3)
 csv(rot, ["T_av_N", "H_N", "Q_Nm", "Mr_Nm", "T_ar_N"], "1_drone_rotor_vs_rpm.csv")
 csv(cell, [c for c, _ in comp], "2_cellule_vs_rpm.csv")
-csv(base, [c for c, _ in comp], "3_base_vs_rpm.csv")
+csv(joint, [f"tau_{k}_Nm" for k in JOINTS], "3_articulations_vs_rpm.csv")
 print(f"-> {OUT}")

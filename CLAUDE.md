@@ -1,6 +1,6 @@
 # DroneBench
 
-Banc d'efforts du VKI (EAU 2505) : un drone Holybro X650 monté sur une cellule 6 axes, au bout d'un bras robotisé.
+Banc d'efforts du VKI (EAU 2505) : un drone Holybro X650 sur une cellule 6 axes ATI Gamma, au bout d'un bras à 3 axes motorisés (yaw à la base, roll, pitch).
 Deux cas : sans vent, et en soufflerie de 1 à 13 m/s.
 
 - Modèle : `bench/loads.py`
@@ -17,5 +17,5 @@ Deux cas : sans vent, et en soufflerie de 1 à 13 m/s.
 - Économiser les tokens : réponses courtes, lecture ciblée, pas de récapitulatif redondant.
 - Python de niveau ingénieur aéro : SI, commentaires succincts, prints épurés.
 - L'utilisateur s'entraîne à lire les équations : pour toute nouvelle équation, donner une « Lecture » d'une ligne.
-- Hypothèses non confirmées (marquées « À CONFIRMER » dans le code) : masse, hélices, CdA, modèle de capteur.
+- Hypothèses non confirmées (marquées « À CONFIRMER » dans le code) : CdA, calibration du Gamma (SI-32-2.5, SI-65-5 ou SI-130-10), masses du banc.
 - Équations en LaTeX (`$...$`, rendu GitHub) ; dans les tableaux, utiliser `\lvert x\rvert` et non `|x|`.
