@@ -92,3 +92,17 @@ Domaine : le sillage n'est rigide que si $V \gtrsim v_h$ (≈ 6.9 m/s ici, χ �
 | E27 | $\tau_j = \mathbf{u}_j\cdot\left(\mathbf{M}_O + \mathbf{r}_{P_jO}\times\mathbf{F}\right)$ | Le moteur $j$ ne tient que la composante du moment, transporté sur son axe, le long de cet axe. Le reste passe par les paliers. Le poids du drone est inclus, car il n'y a pas de tare côté moteur. |
 
 Contrôle : à $V = 0$ et au régime de stationnaire (6740 tr/min), $T = mg$, donc $\tau_{pitch} \approx 0$. C'est bien ce que montre la figure 3.
+
+## Attitude imposée par le banc (`bench/loads.py`, `bench/wake.py`, `bench/attitude.py`)
+
+Chaîne base → yaw (z) → roll (x) → pitch (y) → drone. ψ > 0 nez à gauche, φ > 0 côté droit en bas, θ > 0 nez en bas (θ = α). Vent monde horizontal, selon −x. $\mathbf{R}$ : repère drone → monde.
+
+| # | Équation | Lecture |
+|---|---|---|
+| E28 | $\mathbf{R} = R_z(\psi)\,R_x(\varphi)\,R_y(\theta)$ ; $\mathbf{v}_a = \mathbf{R}^T(-V,0,0)^T$ ; $\mathbf{W} = \mathbf{R}^T(0,0,-mg)^T$ | On applique les rotations dans l'ordre des moteurs, puis on projette le vent et le poids du monde dans le repère du drone. |
+| E29 | $\mu = \dfrac{\sqrt{v_{a,x}^2+v_{a,y}^2}}{\Omega R}$, $\lambda_c = \dfrac{-v_{a,z}}{\Omega R}$, $\alpha_r = \operatorname{atan2}\!\left(-v_{a,z},\ \sqrt{v_{a,x}^2+v_{a,y}^2}\right)$ | Un rotor axisymétrique ne voit que deux nombres : la vitesse dans son plan et la vitesse qui le traverse vers le bas. |
+| E30 | $\beta_r = \operatorname{atan2}(-v_{a,y}, -v_{a,x})$ ; $(\mathbf{F},\mathbf{M}_{moyeu}) = R_z(\beta_r)\,\big((-H,\ sY,\ T),\ (-sM_r,\ M_p,\ -sQ)\big)$ | On calcule le rotor dans son repère vent, puis on fait tourner H, Y et les moments de moyeu de β_r, la direction d'avance dans le plan ; s garde son rôle. |
+| E31 | $\Delta v_i = \displaystyle\sum_{j:\,X_{ij}>0} \eta\!\left(\chi_j, X_{ij}, \lvert Y_{ij}\rvert\right) v_{0,j}$, avec $X_{ij} = \dfrac{(\mathbf{p}_i-\mathbf{p}_j)\cdot\mathbf{e}}{R}$, $Y_{ij} = \dfrac{(\mathbf{p}_i-\mathbf{p}_j)\cdot\mathbf{n}}{R}$ | Chaque rotor reçoit la somme des sillages des rotors en amont, évalués à sa position le long du vent (X) et en travers (Y). Les rotors en aval ne comptent pas. |
+| E32 | $\tau_j = (Q_j\mathbf{u}_j)\cdot(\mathbf{M}_O + \mathbf{r}_j\times\mathbf{F})$, $Q_{pitch}=I$, $Q_{roll}=R_y^T(\theta)$, $Q_{yaw}=(R_xR_y)^T$ ; $\mathbf{r}_{roll} = \mathbf{r}_{pitch} + Q_{roll}(\mathbf{r}^0_{roll}-\mathbf{r}^0_{pitch})$, $\mathbf{r}_{yaw} = \mathbf{r}_{roll} + Q_{yaw}(\mathbf{r}^0_{yaw}-\mathbf{r}^0_{roll})$ | E27 à attitude quelconque : chaque axe moteur et son bras de levier tournent avec l'étage qui le porte, puis on les ramène dans le repère du drone. |
+
+Contrôles : att = (0, 0, α) redonne l'ancien `wrench` à 1.4e-14 près. À ψ = 0, le roulis φ n'agit que sur le poids, car l'axe de roulis est aligné avec le vent. η(χ, X, Y) est pair en Y (vérifié), et vaut 0 hors du tube à χ = 0.

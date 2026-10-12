@@ -75,6 +75,23 @@ def dv_rear(b, T_front, V, alpha=0.0):
     return eta(round(float(chi), 4), round(2 * b.d / b.R, 3)) * v0, chi, v0
 
 
+
+def dv_rotors(b, T, P, V, alpha, beta):
+    """E31 : Δv_i = Σ_j η(χ_j, X_ij, Y_ij)·v₀_j sur les rotors j amont (X_ij > 0) ; P : moyeux (n, 2) [m].
+    (X, Y) : position de i dans le repère du sillage de j, X le long de l'air dans le plan (β : sens d'avance)."""
+    e = -np.array([np.cos(beta), np.sin(beta)])             # sens de l'air dans le plan
+    n = np.array([-e[1], e[0]])
+    dv = np.zeros(len(P))
+    for j, Tj in enumerate(T):
+        if Tj <= 0 or V == 0:
+            continue
+        v0, chi = front_wake(Tj, V, alpha, b.A)
+        for i in range(len(P)):
+            X, Y = (P[i] - P[j]) @ e / b.R, (P[i] - P[j]) @ n / b.R
+            if X > 1e-6:                                    # sillage symétrique en Y
+                dv[i] += eta(round(float(chi), 4), round(X, 3), round(abs(Y), 3)) * v0
+    return dv
+
 if __name__ == "__main__":
     # Jewel & Heyson (1959) fig. 19(a) : num. = numérisation 300 dpi (bruit ±0.07, témoin χ = 0) ; #6 = lecture BOARD
     chis = [14, 27, 45, 63, 76]

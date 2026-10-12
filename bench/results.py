@@ -12,7 +12,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from loads import Bench, wrench, LIMITS          # noqa: E402
+from loads import Bench, wrench, LIMITS, JOINTS, joint_torques          # noqa: E402
 from rotor_bemt import rotor_bemt                # noqa: E402
 from wake import dv_rear                         # noqa: E402
 
@@ -21,11 +21,6 @@ OUT = Path(__file__).resolve().parents[1] / "Results"
 RPM = np.arange(3000, 9001, 500)
 VS = [0, 5, 9, 13]                               # m/s
 COL = ["#6da7ec", "#2a78d6", "#1c5cab", "#0d366b"]  # rampe ordinale, validée
-# Axes moteurs (CAO -> repère drone : x = -X, y = -(Z - Z_O), z = hauteur) : r_PO = O - P [m], axe u
-JOINTS = {"yaw":   (np.array([0.337, -0.136, 1.037]), np.array([0, 0, 1.0])),   # robolink, axe vertical
-          "roll":  (np.array([0.402, -0.128, 0.601]), np.array([1.0, 0, 0])),   # arbre Ø20, h = 605 mm
-          "pitch": (np.array([0.467, -0.064, 0.342]), np.array([0, 1.0, 0]))}   # arbre Ø20, h = 864 mm
-
 b = Bench()
 rot = {}                                          # (V, rpm) -> [T, H, Q, Mr, T_ar]
 cell, joint = {}, {}
@@ -39,7 +34,7 @@ for V in VS:
         rot[V, n] = [T, H, Q, Mr, T_ar]
         cell[V, n] = w
         wg = wrench(b, Om, V, rot=rotor_bemt, dv=dv, tare=False)      # poids réel aux moteurs
-        joint[V, n] = [u @ (wg[3:] + np.cross(r, wg[:3])) for r, u in JOINTS.values()]  # E27
+        joint[V, n] = list(joint_torques(wg))                          # E27
     print(f"V = {V:2d} m/s  ok")
 
 

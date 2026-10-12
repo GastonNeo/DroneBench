@@ -67,32 +67,79 @@ def omega_hover(b, rot=rotor):
     return 0.5 * (lo + hi)
 
 
-def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor, dv=0.0):
+def att_rot(psi=0.0, phi=0.0, theta=0.0):
+    """E28 : R monde<-drone = Rz(ψ)·Rx(φ)·Ry(θ), chaîne base -> yaw -> roll -> pitch.
+    ψ > 0 nez à gauche, φ > 0 côté droit en bas, θ > 0 nez en bas (= α)."""
+    c, s = np.cos, np.sin
+    Rz = np.array([[c(psi), -s(psi), 0], [s(psi), c(psi), 0], [0, 0, 1]])
+    Rx = np.array([[1, 0, 0], [0, c(phi), -s(phi)], [0, s(phi), c(phi)]])
+    Ry = np.array([[c(theta), 0, s(theta)], [0, 1, 0], [-s(theta), 0, c(theta)]])
+    return Rz @ Rx @ Ry
+
+
+def rotor_frame(V, att):
+    """E29–E30 : air relatif va (repère drone), (V_r, α_r) équivalents du rotor, β_r direction d'avance."""
+    va = att_rot(*att).T @ np.array([-V, 0.0, 0.0])        # vent monde selon -x
+    Vr, ar = np.linalg.norm(va), np.arctan2(-va[2], np.hypot(va[0], va[1]))
+    return va, Vr, ar, np.arctan2(-va[1], -va[0])
+
+
+def hubs(b):
+    return b.d * np.array([[1, -1], [-1, 1], [1, 1], [-1, -1]])  # PX4 quad-X : 1 AvD, 2 ArG, 3 AvG, 4 ArD
+
+
+SPIN = [1, 1, -1, -1]                                       # +1 = CCW vu de dessus
+
+
+def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor, dv=0.0, att=None, wake=False):
     """[Fx, Fy, Fz, Mx, My, Mz] exercé par le drone sur la cellule. Om : scalaire ou 4 valeurs.
-    dv : Δv vers le bas sur les rotors arrière (sillage avant, E26)."""
+    att = (ψ, φ, θ) [rad] remplace alpha (att = (0, 0, α) ≡ alpha). dv : Δv vers le bas,
+    scalaire = rotors arrière (E26) ou 4 valeurs ; wake=True : Δv par rotor calculé (E31)."""
+    va, Vr, ar, beta = rotor_frame(V, (0.0, 0.0, alpha) if att is None else att)
+    cb, sb = np.cos(beta), np.sin(beta)
+    Rb = np.array([[cb, -sb, 0], [sb, cb, 0], [0, 0, 1]])  # repère vent rotor -> drone (E30)
+    P, Om = hubs(b), np.broadcast_to(Om, 4)
+    dv = np.where(P[:, 0] < 0, dv, 0.0) if np.ndim(dv) == 0 else np.asarray(dv, float)
     cache = {}                                              # un appel rotor par régime distinct
-    hubs = b.d * np.array([[1, -1], [-1, 1], [1, 1], [-1, -1]])  # PX4 quad-X : 1 AvD, 2 ArG, 3 AvG, 4 ArD
-    spin = [1, 1, -1, -1]                                   # +1 = CCW vu de dessus
+    def call(om, d):
+        if (om, d) not in cache:
+            cache[om, d] = rot(b, om, Vr, ar, dv=d) if d else rot(b, om, Vr, ar)
+        return cache[om, d]
+    if wake:
+        from wake import dv_rotors
+        T = [call(om, 0.0)[0] if om > 0 else 0.0 for om in Om]
+        dv = dv + dv_rotors(b, T, P, Vr, ar, beta)
     F, M = np.zeros(3), np.zeros(3)
-    for (x, y), s, om in zip(hubs, spin, np.broadcast_to(Om, 4)):
+    for (x, y), s, om, d in zip(P, SPIN, Om, dv):
         if om <= 0:                                         # rotor arrêté : ignoré
             continue
-        k = (om, dv if x < 0 else 0.0)
-        if k not in cache:
-            cache[k] = rot(b, om, V, alpha, dv=k[1]) if k[1] else rot(b, om, V, alpha)
-        T, H, Q, (Mr, Mp, Y) = (*cache[k], (0, 0, 0))[:4]   # 3 retours tolérés
-        f = np.array([-H, s * Y, T])                        # H opposé à l'avance ; Y : E20
-        r = np.array([x, y, b.h_r])
+        T, H, Q, (Mr, Mp, Y) = (*call(om, float(d)), (0, 0, 0))[:4]   # 3 retours tolérés
+        f = Rb @ np.array([-H, s * Y, T])                   # H opposé à l'avance ; Y : E20
         F += f
-        M += np.cross(r, f) + np.array([-s * Mr, Mp, -s * Q])  # E19 moyeu ; réaction couple
-    va = -V * np.array([np.cos(alpha), 0, np.sin(alpha)])   # air relatif (repère drone)
+        M += np.cross([x, y, b.h_r], f) + Rb @ np.array([-s * Mr, Mp, -s * Q])  # E19 moyeu ; couple
     D = 0.5 * RHO * np.abs(va) * np.array(b.CdA) * va       # traînée cellule
-    W = b.m * G0 * np.array([np.sin(alpha), 0, -np.cos(alpha)])
+    W = att_rot(*((0.0, 0.0, alpha) if att is None else att)).T @ np.array([0, 0, -b.m * G0])
     F += D + W
     M += np.cross([0, 0, b.h_f], D) + np.cross([0, 0, b.h_g], W)
-    if tare:                                                # tare à vide, alpha = 0
+    if tare:                                                # tare à vide, attitude nulle
         F -= np.array([0, 0, -b.m * G0])
     return np.concatenate([F, M])
+
+
+# Axes moteurs (CAO -> repère drone à attitude nulle : x = -X, y = -(Z - Z_O), z = hauteur) : r_PO = O - P [m], axe u
+JOINTS = {"yaw":   (np.array([0.337, -0.136, 1.037]), np.array([0, 0, 1.0])),   # robolink, axe vertical
+          "roll":  (np.array([0.402, -0.128, 0.601]), np.array([1.0, 0, 0])),   # arbre Ø20, h = 605 mm
+          "pitch": (np.array([0.467, -0.064, 0.342]), np.array([0, 1.0, 0]))}   # arbre Ø20, h = 864 mm
+
+
+def joint_torques(w, att=(0.0, 0.0, 0.0)):
+    """E27 + E32 : τ [yaw, roll, pitch] ; axes et bras de chaque étage ramenés au repère drone."""
+    _, phi, th = att
+    Q = {"yaw": att_rot(0, phi, th).T, "roll": att_rot(0, 0, th).T, "pitch": np.eye(3)}  # étage -> drone
+    (ry, uy), (rr, ur), (rp, up) = JOINTS.values()
+    r = {"pitch": rp, "roll": rp + Q["roll"] @ (rr - rp)}
+    r["yaw"] = r["roll"] + Q["yaw"] @ (ry - rr)
+    return np.array([(Q[k] @ JOINTS[k][1]) @ (w[3:] + np.cross(r[k], w[:3])) for k in JOINTS])
 
 
 # ATI Gamma SI-130-10 (confirmé) : Fxy, Fz, Mxy, Mz

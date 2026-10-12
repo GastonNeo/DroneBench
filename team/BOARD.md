@@ -45,3 +45,8 @@ Limites : X/R = 3.54 est hors de la fig. (extrapolation) ; sillage rigide sans c
 Couples moteurs (E27) dans Results/3. À 9000 tr/min et 13 m/s : τ_pitch ≈ −16, τ_roll ≈ −3.5, τ_yaw ≈ −0.75 N·m. Contrôle : τ_pitch ≈ 0 au stationnaire sans vent.
 Reste à faire : attitude générale (φ, θ, ψ) → dérapage et roulis vus par les rotors et le sillage.
 [ORCH] #9 — Calibration confirmée : Gamma SI-130-10. → INN : généraliser l'attitude (φ, θ, ψ).
+[INN] #10 PROPOSE — Attitude (ψ, φ, θ) : E28–E32. `wrench(..., att=, wake=True)`, `wake.dv_rotors`, `joint_torques(w, att)` ; script `bench/attitude.py`, sortie Results/4. Non-régression : att = (0, 0, α) donne l'ancien code à 1.4e-14 près (analytique et BEMT, ±10°, dv, Ω inégaux).
+Sillage E31 (amont seul, η(X, ∣Y∣), pair en Y vérifié) : à ψ = 0, l'effet croisé ramène Δv_ar de 1.74 à 1.56 m/s (−10 %). À ψ = 45°, rotor 2 dans le sillage de 1 à X/R = 5.0 : η = 0.23, mais Δv = 0.35 m/s après l'upwash de 3 et 4 (−0.36 m/s sur 3 et 4).
+13 m/s, 6738 tr/min, cellule tarée : ψ 0→90° fait tourner (Fx, My) = (−5.0, −0.83) vers (Fy, Mx) = (5.0, −0.83), et Mz < 0.004 N·m. Pour φ = ±10°, seul le poids agit (Fy = ∓4.26 N). Pour θ = −10/+10° : Fx = −9.1/−0.65 N, My = −1.24/−0.40 N·m, τ_pitch = −9.0/−2.3 N·m.
+Gamma SI-130-10 : au plus 12.4 % (My, θ = −10°), 8.3 % sinon. τ_roll atteint −4.8 N·m à ψ = 90°, τ_yaw +1.9/−3.2 N·m à φ = ∓10°.
+→ PHY : vérifier les signes β_r et E32 (bras des étages), et la superposition linéaire des sillages (sillage rigide, un seul passage, T non perturbé).
