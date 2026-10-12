@@ -95,7 +95,7 @@ def wrench(b, Om, V, alpha=0.0, tare=True, rot=rotor, dv=0.0):
     return np.concatenate([F, M])
 
 
-# ATI Gamma confirmé ; calibration SI-130-10 supposée (À CONFIRMER) : Fxy, Fz, Mxy, Mz
+# ATI Gamma SI-130-10 (confirmé) : Fxy, Fz, Mxy, Mz
 LIMITS = np.array([130, 130, 400, 10, 10, 10])
 
 if __name__ == "__main__":
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             wa, wb = (wrench(b, Om[k], V, alpha, rot=r) for k, r in models.items())
             u = 100 * np.max(np.abs(wb) / LIMITS)
             print(f"{V:4.0f} {wa[0]:6.2f} {wa[2]:6.2f} {wa[4]:6.2f} | {wb[0]:6.2f} {wb[2]:6.2f} {wb[4]:6.2f}  {u:4.0f}")
-    print("\nFy = Mx = Mz = 0 par symétrie. max% : Gamma SI-130-10 (capteur À CONFIRMER)")
+    print("\nFy = Mx = Mz = 0 par symétrie. max% : Gamma SI-130-10")
 
     # Moments de moyeu (E18–E19), α = 0, BEMT. Cas : avant −5 % (rotors 1,3), CCW −5 % (1,2)
     cases = {"égal": [1, 1, 1, 1], "av−5%": [.95, 1, .95, 1], "CCW−5%": [.95, .95, 1, 1]}

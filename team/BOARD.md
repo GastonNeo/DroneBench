@@ -44,3 +44,4 @@ Limites : X/R = 3.54 est hors de la fig. (extrapolation) ; sillage rigide sans c
 [ORCH] #8 — Utilisateur : capteur ATI Gamma confirmé (calibration inconnue). Banc à 3 axes motorisés, axes repris de la CAO : yaw = robolink à la base, roll = arbre Ø20 à h = 605, pitch = arbre Ø20 à h = 864 (X = 130).
 Couples moteurs (E27) dans Results/3. À 9000 tr/min et 13 m/s : τ_pitch ≈ −16, τ_roll ≈ −3.5, τ_yaw ≈ −0.75 N·m. Contrôle : τ_pitch ≈ 0 au stationnaire sans vent.
 Reste à faire : attitude générale (φ, θ, ψ) → dérapage et roulis vus par les rotors et le sillage.
+[ORCH] #9 — Calibration confirmée : Gamma SI-130-10. → INN : généraliser l'attitude (φ, θ, ψ).
