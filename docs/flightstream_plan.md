@@ -41,19 +41,33 @@ L'origine ATI exacte est donnée par le plan du Gamma et par le fichier de calib
 - **À modéliser sans l'intégrer :** le bras, la poutre et le montant. Ils dévient l'écoulement et reçoivent le sillage, mais le capteur ne les voit pas.
 - **Attention :** un solveur à panneaux prédit mal la traînée de corps non profilés, car il ne modélise pas les décollements. Le $C_DA$ de la cellule calculé par FS est donc à comparer à la mesure, hélices à l'arrêt (`bench/cda.py`), et non à prendre tel quel.
 
-## 4. Rotors : actuator disk
+## 4. Rotors : actuator disk (revue RES #11, extraits seulement)
 
-À clarifier par la littérature (voir la section Research ci-dessous) :
-1. **Les entrées du disque**, à définir de façon cohérente avec la BEMT de `BEMT/` au même régime : poussée, couple, distribution radiale, swirl.
-2. **Les efforts rapportés par FS** incluent-ils $T$ et $Q$ du disque ? Si ce n'est pas le cas, on les ajoute :
+**Ce que l'on sait.** Le disque de FS est un modèle de Conway linéarisé, stationnaire, à charge uniforme. Les vitesses du sillage sont superposées dans le volume situé derrière le disque. Entrées : rayon, RPM, $C_T$, $C_P$ (ou $T$, $P$).
+Une autre option existe : l'hélice modélisée comme une aile en rotation, en mode instationnaire, ou en repère tournant pour une hélice isolée.
+Sources : NASA 2020 (ntrs 20200002409), DiMaggio et al., SciTech 2025 (LA-8, ntrs 20240014618), IOP 1226 012008 (2021).
+
+**Limites publiées.** Le disque ne voit ni l'incidence ni un inflow non uniforme. Sur le LA-8, la portance et la traînée sont correctes, mais **le moment de tangage s'écarte nettement**. L'interaction n'agit que dans un sens : l'hélice influence l'aile, pas l'inverse. On n'a trouvé **aucune validation FS sur multirotor**.
+
+**Conséquence pour le projet.** On sépare les rôles :
+- $T$, $Q$, $H$ et les moments de moyeu viennent de la BEMT du dépôt (`bench/rotor_bemt.py`), avec le sillage avant → arrière de `bench/wake.py` ;
+- FS fournit les efforts sur la cellule et les interactions sillage/structure : déportance sur les bras, traînée en soufflerie.
+
+Ensuite :
 
 $$\mathbf{F}_{rot} = \sum_i T_i\,\mathbf{n}_i,\qquad \mathbf{M}_{rot} = \sum_i \left[\mathbf{r}_i\times T_i\mathbf{n}_i - s_i Q_i\,\mathbf{n}_i\right]$$
 
-   - $\mathbf{r}_i$ : position du moyeu $i$ par rapport à $O_G$ ;
-   - $\mathbf{n}_i$ : axe du rotor ;
-   - $s_i = +1$ pour un rotor CCW vu de dessus. Un rotor CCW exerce sur le drone un couple de réaction CW, d'où le signe $-$.
+où $\mathbf{r}_i$ est la position du moyeu par rapport à $O_G$, $\mathbf{n}_i$ l'axe du rotor, et $s_i = +1$ pour un rotor CCW vu de dessus (le couple de réaction est CW).
 
-3. **Le cas V = 0** : FS a-t-il besoin d'une vitesse de référence non nulle ?
+**Trois tests de prise en main, à faire en premier, car le manuel FS n'est pas public :**
+
+| # | Test | Question tranchée |
+|---|---|---|
+| P1 | Disque isolé, sans aucune surface | Les efforts rapportés valent-ils ≈ $T$, ou ≈ 0 ? C'est ce qui dit s'il faut ajouter $T$ et $Q$ à la main. |
+| P2 | Disque seul, $V_\infty$ = 0.1 / 0.5 / 1 m/s | Le cas V = 0 converge-t-il ? Quelle vitesse de référence minimale faut-il ? |
+| P3 | Une plaque plane sous un disque, efforts réduits en deux points différents | Peut-on choisir le point de réduction et sélectionner les surfaces ? Le transport T3 est-il vérifié ? |
+
+Si FS ne permet pas de choisir le point de réduction ni les surfaces, on exporte les efforts par composant et on fait la réduction au capteur en Python (E10, E27).
 
 ## 5. Matrice de cas (de la plus simple à la plus complète)
 
